@@ -16,6 +16,8 @@ const delunverifiedusers = asynchandler(async (req, res) => {
     return res.json({ message: "no users to delete" });
   }
 });
+
+
 let registeruser = asynchandler(async (req, res) => {
   // Check if a file was uploaded
   if (!req.file || !req.file.path) {
@@ -23,7 +25,7 @@ let registeruser = asynchandler(async (req, res) => {
   }
 
   const ss = req.file.path; // File path from the uploaded file
-  const { fullname, phone, email, password, country, city, profession, classtype , referralCode } = req.body;
+  const { fullname, phone, email, password, country, city, profession, classtype , referralCode , referredBy } = req.body;
 
   // // Upload screenshot to Cloudinary
   let screenshot;
@@ -55,7 +57,7 @@ let registeruser = asynchandler(async (req, res) => {
 
   let user;
   try {
-    // Create the user without customer ID initially
+    // Create the user without customer ID initially 
     user = await User.create({
       email,
       password,

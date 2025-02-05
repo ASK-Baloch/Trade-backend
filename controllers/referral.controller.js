@@ -53,6 +53,7 @@ export const handleReferralCommission = async (userId, amount) => {
 
     // Move to the next referrer
     currentUser = await User.findById(currentUser.referredBy);
+    
     level++;
   }
 };
@@ -67,7 +68,7 @@ const signUpWithReferral = async (req, res) => {
   }
 
   const ss = req.file.path; // File path from the uploaded file
-  const { fullname, phone, email, password, country, city, profession, classtype , referralCode , referredBy} = req.body;
+  const { fullname, phone, email, password, country, city, profession, classtype , referredBy} = req.body;
 
   // Upload screenshot to Cloudinary
   let screenshot;
