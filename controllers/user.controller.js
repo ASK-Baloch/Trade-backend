@@ -25,9 +25,9 @@ let registeruser = asynchandler(async (req, res) => {
   }
 
   const ss = req.file.path; // File path from the uploaded file
-  const { fullname, phone, email, password, country, city, profession, classtype , referralCode , referredBy } = req.body;
+  const { fullname, phone, email, password, country, city, profession, classtype  , referredBy } = req.body;
 
-  // // Upload screenshot to Cloudinary
+  // // // Upload screenshot to Cloudinary
   let screenshot;
   try {
     screenshot = await cloudinary.uploader.upload(ss);
@@ -35,7 +35,7 @@ let registeruser = asynchandler(async (req, res) => {
     return res.status(500).json({ message: "Error uploading file to Cloudinary", error: uploadError.message });
   }
 
-  // Validate input fields
+  // // Validate input fields
   if (!email || !password) {
     throw new apierror(400, "All fields are required");
   }
