@@ -1,29 +1,18 @@
 import { User } from '../models/user.model.js';
 import { Referral } from '../models/refer.model.js';
-import { asynchandler } from "../utils/asynchandler.js";
-import { apiresponse } from "../utils/responsehandler.js";
 import { apierror } from "../utils/apierror.js";
 import cloudinary from '../middelwares/cloudinary.middelware.js'
-
-
-// Helper function to generate a unique referral code
-export const generateReferralCode = (fullname, email) => {
-  const namePart = fullname.split(' ').map(word => word[0].toUpperCase()).join('');
-  const emailPart = email.split('@')[0].toUpperCase(); 
-  const randomDigits = Math.floor(10000000000 + Math.random() * 90000000000);
-  const paddedNumber = String(randomDigits).padStart(11, '0'); 
-  
-  return `${namePart}${emailPart}${paddedNumber}`;
-};
+import { generateReferralCode } from '../utils/generateRefferalCode.js';
 
 // Function to handle referral commission logic
-export const handleReferralCommission = async (userId, amount) => {
-  const commissionRates = [0.1, 0.05, 0.02]; // Level 1: 10%, Level 2: 5%, Level 3: 2%
+export const handleReferralCommission = async (userId) => {
+  // Fixed commission amounts for each level:
+  const fixedCommissionValues = [3000, 3000 * 0.10, 3000 * 0.05]; // [3000, 300, 150]
 
   let currentUser = await User.findById(userId);
   let level = 0;
 
-  while (currentUser && level < commissionRates.length) {
+  while (currentUser && level < fixedCommissionValues.length) {
     // Find or create a referral record for the current user
     let referral = await Referral.findOne({ user: currentUser._id });
     if (!referral) {
@@ -33,17 +22,16 @@ export const handleReferralCommission = async (userId, amount) => {
       });
     }
 
-    // Calculate commission for the current level
-    const commission = amount * commissionRates[level];
+    // Add the fixed commission based on the level
     switch (level) {
       case 0:
-        referral.commission.level1 += commission;
+        referral.commission.level1 += fixedCommissionValues[0];
         break;
       case 1:
-        referral.commission.level2 += commission;
+        referral.commission.level2 += fixedCommissionValues[1];
         break;
       case 2:
-        referral.commission.level3 += commission;
+        referral.commission.level3 += fixedCommissionValues[2];
         break;
       default:
         break;
@@ -51,9 +39,8 @@ export const handleReferralCommission = async (userId, amount) => {
 
     await referral.save();
 
-    // Move to the next referrer
+    // Move to the next referrer in the chain
     currentUser = await User.findById(currentUser.referredBy);
-    
     level++;
   }
 };
@@ -123,7 +110,7 @@ const signUpWithReferral = async (req, res) => {
       });
       await referral.save();
 
-      await handleReferralCommission(referrer._id, 100);
+      await handleReferralCommission(referrer._id);
     }
     await newUser.save();
 

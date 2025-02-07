@@ -5,8 +5,7 @@ import { apierror } from "../utils/apierror.js";
 import cloudinary from '../middelwares/cloudinary.middelware.js'
 import { Referral } from '../models/refer.model.js';
 import { handleReferralCommission } from "./referral.controller.js";
-import { generateReferralCode } from "./referral.controller.js";
-
+import { generateReferralCode } from "../utils/generateRefferalCode.js";
 
 const delunverifiedusers = asynchandler(async (req, res) => {
   const users = await User.deleteMany({ verified: false });
@@ -80,7 +79,7 @@ let registeruser = asynchandler(async (req, res) => {
       });
       await referral.save();
 
-      await handleReferralCommission(referrer._id, 100);
+      await handleReferralCommission(referrer._id);
     }
       await user.save();
     
