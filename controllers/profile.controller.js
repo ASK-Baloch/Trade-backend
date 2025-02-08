@@ -60,7 +60,7 @@ const profileController = async (req, res) => {
         // Return the user's profile and referral details
         const userProfile = {
             "profile": profile,
-            'referred_by': referringuser.fullname,
+            'referred_by': referringuser ? referringuser.fullname : null,
             'total_commission': commission,
             'referral_details': {
                 'level1_referrals': totalReferralsL1,
