@@ -13,20 +13,24 @@ const computeTotalCommission = (referralRecord) => {
 };
 
 const deductFromTotalCommission = (referralRecord, withdrawalAmount) => {
-  const total = computeTotalCommission(referralRecord);
-  if (total < withdrawalAmount) {
-    throw new Error("Insufficient commission balance");
+  try {
+    const total = computeTotalCommission(referralRecord);
+    if (total < withdrawalAmount) {
+      throw new Error("Insufficient commission balance");
+    }
+
+    const deductionRatio = withdrawalAmount / total;
+
+    // Deduct proportionally and round to avoid floating-point precision issues
+    referralRecord.commission.level1 = Math.max(0, referralRecord.commission.level1 - Math.round(referralRecord.commission.level1 * deductionRatio));
+    referralRecord.commission.level2 = Math.max(0, referralRecord.commission.level2 - Math.round(referralRecord.commission.level2 * deductionRatio));
+    referralRecord.commission.level3 = Math.max(0, referralRecord.commission.level3 - Math.round(referralRecord.commission.level3 * deductionRatio));
+
+    // Explicitly mark the nested commission object as modified
+    referralRecord.markModified("commission");
+  } catch (error) {
+    rethrow;
   }
-
-  const deductionRatio = withdrawalAmount / total;
-
-  // Deduct proportionally and round to avoid floating-point precision issues
-  referralRecord.commission.level1 = Math.max(0, referralRecord.commission.level1 - Math.round(referralRecord.commission.level1 * deductionRatio));
-  referralRecord.commission.level2 = Math.max(0, referralRecord.commission.level2 - Math.round(referralRecord.commission.level2 * deductionRatio));
-  referralRecord.commission.level3 = Math.max(0, referralRecord.commission.level3 - Math.round(referralRecord.commission.level3 * deductionRatio));
-
-  // Explicitly mark the nested commission object as modified
-  referralRecord.markModified("commission");
 };
 
 
@@ -70,19 +74,57 @@ const delUnverifiedUsers = asynchandler(async (req, res) => {
     return res.json({ message: "no users to delete" });
   }
 });
-
+////////get all users
 const getAllUsers = asynchandler(async (req, res) => {
-  const users = await User.find({});
+  try {
+    const users = await User.find({});
+    res.json({ users: users });
 
-  res.json({ users: users });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching users", error: error.message });
+  }
 });
+
+//////get all unverified users
+const getUnverifiedUsers = asynchandler(async (req, res) => {
+  try {
+    const unverifiedUsers = await User.find({ approved: false });
+    res.json({ unverifiedUsers: unverifiedUsers });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching unverified users", error: error.message });
+  }
+});
+
+// get all verified users
+const getVerifiedUsers = asynchandler(async (req, res) => {
+  try {
+    const verifiedUsers = await User.find({ approved: true });
+    res.json({ verifiedUsers: verifiedUsers });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching verified users", error: error.message });
+  }
+});
+///get all referrals
+
+const getAllReferrals = asynchandler(async (req, res) => {
+  try {
+    const referrals = await Referral.find({});
+    res.json({ referrals: referrals });
+  } catch (error) {
+    console.log("Error fetching referrals:", error);
+  }
+})
+
+///delete user
 const deleteUser = asynchandler(async (req, res) => {
-  const { id } = req.body;
-
-  const deleteduser = await User.findByIdAndDelete(id);
-
-  if (deleteduser) {
-    res.json({ mesaage: "user deleted Successfully", user: deleteduser });
+  try {
+    const { id } = req.params;
+    const deleteduser = await User.findByIdAndDelete(id);
+    if (deleteduser) {
+      res.json({ mesaage: "user deleted Successfully", user: deleteduser });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting user", error: error.message });
   }
 });
 
@@ -103,36 +145,41 @@ const getAdminWithdrawalRequests = async (req, res) => {
  */
 const approveWithdrawalRequest = async (req, res) => {
   try {
-    const { requestId, status } = req.body;
-    if (!requestId || !status) {
-      return res.status(400).json({ message: "Request ID and status are required" });
+    const requestId = req.params;
+    if (!requestId) {
+      return res.status(400).json({ message: "Request ID is required" });
     }
+    console.log('request id', requestId)
 
     // Find the withdrawal request by its ID
-    const withdrawalRequest = await Withdraw.findById(requestId);
+    const withdrawalRequest = await Withdraw.findById({ _id: requestId.id });
     if (!withdrawalRequest) {
-      return res.status(404).json({ message: "Withdrawal request not found" });
+      return res.status(400).json({ message: "Withdrawal request not found" });
     }
+    console.log('request for withdrawal before ', withdrawalRequest)
+    const APPROVED_STATUS = "Approved";
+
+    if (withdrawalRequest.status === APPROVED_STATUS) {
+      return res.status(404).json({ message: "Withdrawal request can not be proceeded" });
+
+    }
+    console.log('request for withdrawal after ', withdrawalRequest)
 
     // Update status and set processedAt timestamp
-    withdrawalRequest.status = status;
+    withdrawalRequest.status = APPROVED_STATUS;
     withdrawalRequest.processedAt = new Date();
     await withdrawalRequest.save();
 
     // If approved, deduct the requested amount from the user's total commission
-    if (status === "Approved") {
+    if (withdrawalRequest.status === APPROVED_STATUS) {
       // Find the referral record for the user who made the withdrawal request
       const referralRecord = await Referral.findOne({ user: withdrawalRequest.user });
       if (!referralRecord) {
-        return res.status(404).json({ message: "Referral record not found for this user" });
+        return res.status(400).json({ message: "Referral record not found for this user" });
       }
 
-      try {
-        deductFromTotalCommission(referralRecord, withdrawalRequest.amount);
-        await referralRecord.save();
-      } catch (error) {
-        return res.status(400).json({ message: error.message });
-      }
+      deductFromTotalCommission(referralRecord, withdrawalRequest.amount);
+      await referralRecord.save();
     }
 
     res.status(200).json({ message: `Withdrawal request ${status} successfully` });
@@ -143,4 +190,5 @@ const approveWithdrawalRequest = async (req, res) => {
 };
 
 
-export { getAdminWithdrawalRequests, approveWithdrawalRequest , approveUser , delUnverifiedUsers, getAllUsers , deleteUser};
+
+export { getAdminWithdrawalRequests, approveWithdrawalRequest, approveUser, delUnverifiedUsers, getAllUsers, deleteUser, getAllReferrals, getUnverifiedUsers, getVerifiedUsers };

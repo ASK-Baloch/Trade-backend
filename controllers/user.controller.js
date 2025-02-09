@@ -15,7 +15,7 @@ let registeruser = asynchandler(async (req, res) => {
   }
 
   const ss = req.file.path; // File path from the uploaded file
-  const { fullname, phone, email, password, country, city, profession, classtype  , referredBy } = req.body;
+  const { fullname, phone, email, password, country, city, profession, classtype, referredBy } = req.body;
 
   // // // Upload screenshot to Cloudinary
   let screenshot;
@@ -59,8 +59,8 @@ let registeruser = asynchandler(async (req, res) => {
       classtype,
       payementss_id: screenshot.public_id,
       payementss_url: screenshot.secure_url,
-      referralCode:  generatedCode, 
-      referredBy: referrer ? referrer._id : null, 
+      referralCode: generatedCode,
+      referredBy: referrer ? referrer._id : null,
     });
 
     if (referrer) {
@@ -72,9 +72,9 @@ let registeruser = asynchandler(async (req, res) => {
 
       await handleReferralCommission(referrer._id);
     }
-      await user.save();
-    
-        // If there's a referrer, create a referral record and handle commission logic
+    await user.save();
+
+    // If there's a referrer, create a referral record and handle commission logic
     return res.status(200).json({ message: "User registered successfully", user });
   } catch (error) {
     console.error("Error creating user:", error);
@@ -90,6 +90,11 @@ const login = asynchandler(async (req, res) => {
   // Check if email and password are provided
   if (!email || !password) {
     return res.status(400).json({ message: "Email and password are required" });
+  }
+  if (user.verified === false) {
+    return res.status(400).message({
+      message: "User is not verified yet. As soon as the user's email is verified, you can access dashbaord."
+    });
   }
 
   // Find user by email
