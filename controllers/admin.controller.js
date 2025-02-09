@@ -3,6 +3,11 @@ import { Referral } from "../models/refer.model.js";
 import { asynchandler } from "../utils/asynchandler.js";
 import { User } from "../models/user.model.js";
 
+// Fixed commission amounts for each level
+const DIRECT_COMMISSION = 3000;
+const LEVEL2_COMMISSION = 300;  // 10% of 3000
+const LEVEL3_COMMISSION = 150;  // 5% of 3000
+
 
 const computeTotalCommission = (referralRecord) => {
   return (
@@ -59,8 +64,57 @@ const approveUser = asynchandler(async (req, res) => {
   }
 });
 
+// const getAllUsers = asynchandler(async (req, res) => {
+//   const users = await User.find({});
+  
+//   res.json({ users: users });
+// });
 
+const getAllUsers = asynchandler(async (req, res) => {
+  // Retrieve all users; using .lean() returns plain JavaScript objects for easier manipulation.
+  const users = await User.find({}).lean();
 
+  // For each user, fetch their referral record and compute referral details.
+  const usersWithReferralDetails = await Promise.all(
+    users.map(async (user) => {
+      // Find the referral record for this user
+      const referralRecord = await Referral.findOne({ user: user._id });
+      let referralDetails = {};
+      
+      if (referralRecord) {
+        // Compute the total commission from the referral record
+        const totalCommission = computeTotalCommission(referralRecord);
+        
+        // Calculate the number of referrals per level by dividing by the fixed amounts
+        const level1Count = referralRecord.commission.level1
+          ? Math.floor(referralRecord.commission.level1 / DIRECT_COMMISSION)
+          : 0;
+        const level2Count = referralRecord.commission.level2
+          ? Math.floor(referralRecord.commission.level2 / LEVEL2_COMMISSION)
+          : 0;
+        const level3Count = referralRecord.commission.level3
+          ? Math.floor(referralRecord.commission.level3 / LEVEL3_COMMISSION)
+          : 0;
+        
+        const totalReferrals = level1Count + level2Count + level3Count;
+        
+        referralDetails = {
+          totalCommission,
+          commissionBreakdown: referralRecord.commission,
+          level1Referrals: level1Count,
+          level2Referrals: level2Count,
+          level3Referrals: level3Count,
+          totalReferrals,
+        };
+      }
+      
+      // Merge the referral details into the user object
+      return { ...user, referralDetails };
+    })
+  );
+
+  res.status(200).json({ users: usersWithReferralDetails });
+});
 
 const delUnverifiedUsers = asynchandler(async (req, res) => {
   const users = await User.deleteMany({ verified: false });
@@ -71,11 +125,6 @@ const delUnverifiedUsers = asynchandler(async (req, res) => {
   }
 });
 
-const getAllUsers = asynchandler(async (req, res) => {
-  const users = await User.find({});
-
-  res.json({ users: users });
-});
 const deleteUser = asynchandler(async (req, res) => {
   const { id } = req.body;
 
