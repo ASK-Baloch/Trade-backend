@@ -64,56 +64,57 @@ const approveUser = asynchandler(async (req, res) => {
   }
 });
 
-// const getAllUsers = asynchandler(async (req, res) => {
-//   const users = await User.find({});
-  
-//   res.json({ users: users });
-// });
-
 const getAllUsers = asynchandler(async (req, res) => {
-  // Retrieve all users; using .lean() returns plain JavaScript objects for easier manipulation.
+  // Retrieve all users; using .lean() returns plain JavaScript objects
   const users = await User.find({}).lean();
+  res.status(200).json({ users });
+});
 
-  // For each user, fetch their referral record and compute referral details.
-  const usersWithReferralDetails = await Promise.all(
-    users.map(async (user) => {
-      // Find the referral record for this user
-      const referralRecord = await Referral.findOne({ user: user._id });
-      let referralDetails = {};
-      
-      if (referralRecord) {
-        // Compute the total commission from the referral record
-        const totalCommission = computeTotalCommission(referralRecord);
-        
-        // Calculate the number of referrals per level by dividing by the fixed amounts
-        const level1Count = referralRecord.commission.level1
-          ? Math.floor(referralRecord.commission.level1 / DIRECT_COMMISSION)
-          : 0;
-        const level2Count = referralRecord.commission.level2
-          ? Math.floor(referralRecord.commission.level2 / LEVEL2_COMMISSION)
-          : 0;
-        const level3Count = referralRecord.commission.level3
-          ? Math.floor(referralRecord.commission.level3 / LEVEL3_COMMISSION)
-          : 0;
-        
-        const totalReferrals = level1Count + level2Count + level3Count;
-        
-        referralDetails = {
-          totalCommission,
-          commissionBreakdown: referralRecord.commission,
-          level1Referrals: level1Count,
-          level2Referrals: level2Count,
-          level3Referrals: level3Count,
-          totalReferrals,
-        };
-      }
-      
-      // Merge the referral details into the user object
-      return { ...user, referralDetails };
-    })
-  );
+// refferal details of a particular user
+const getUserReferralDetails = asynchandler(async (req, res) => {
+  const { userId } = req.params;
+  if (!userId) {
+    return res.status(400).json({ message: "User ID is required" });
+  }
 
-  res.status(200).json({ users: usersWithReferralDetails });
+  // Find the user by ID
+  const user = await User.findById(userId).lean();
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  // Retrieve the referral record for this user
+  const referralRecord = await Referral.findOne({ user: userId });
+  let referralDetails = {};
+
+  if (referralRecord) {
+    // Compute the total commission from the referral record
+    const totalCommission = computeTotalCommission(referralRecord);
+
+    // Compute the number of referrals at each level by dividing by the fixed commission
+    const level1Count = referralRecord.commission.level1
+      ? Math.floor(referralRecord.commission.level1 / DIRECT_COMMISSION)
+      : 0;
+    const level2Count = referralRecord.commission.level2
+      ? Math.floor(referralRecord.commission.level2 / LEVEL2_COMMISSION)
+      : 0;
+    const level3Count = referralRecord.commission.level3
+      ? Math.floor(referralRecord.commission.level3 / LEVEL3_COMMISSION)
+      : 0;
+
+    const totalReferrals = level1Count + level2Count + level3Count;
+
+    referralDetails = {
+      totalCommission, // Total commission available
+      commissionBreakdown: referralRecord.commission, // Raw commission amounts per level
+      level1Referrals: level1Count,
+      level2Referrals: level2Count,
+      level3Referrals: level3Count,
+      totalReferrals,
+    };
+  }
+
+  res.status(200).json({ user, referralDetails });
 });
 
 const delUnverifiedUsers = asynchandler(async (req, res) => {
@@ -192,4 +193,4 @@ const approveWithdrawalRequest = async (req, res) => {
 };
 
 
-export { getAdminWithdrawalRequests, approveWithdrawalRequest , approveUser , delUnverifiedUsers, getAllUsers , deleteUser};
+export { getAdminWithdrawalRequests, approveWithdrawalRequest , approveUser , delUnverifiedUsers, getAllUsers , deleteUser , getUserReferralDetails};
