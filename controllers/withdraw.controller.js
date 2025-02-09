@@ -1,7 +1,8 @@
 import { Withdraw } from "../models/withdraw.model.js";
 
-let withdrawalRequests = [];
-// Controller to create a new withdrawal request
+/**
+ * Create a new withdrawal request.
+ */
 export const withdrawController = async (req, res) => {
   try {
     const { id, amount, paymentMethod, details, status } = req.body;
@@ -22,8 +23,7 @@ export const withdrawController = async (req, res) => {
       status: status || "Pending",
     });
 
-    await newWithdrawal.save();
-    withdrawalRequests.push(newWithdrawal);
+    await newWithdrawal.save(); 
 
     res.status(201).json({
       message: "Withdrawal request created",
@@ -38,30 +38,29 @@ export const withdrawController = async (req, res) => {
   }
 };
 
-// Controller to fetch an existing withdrawal request by its ID
+/**
+ * Fetch all withdrawal requests for a specific user.
+ */
 export const getWithdrawalHistory = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { userId } = req.params;
 
-    if (!id) {
-      return res.status(400).json({ message: "Withdrawal ID is required" });
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
     }
 
-    const withdrawal = await Withdraw.findById(id);
+    const withdrawals = await Withdraw.find({ user: userId }).sort({ createdAt: -1 });
 
-    if (!withdrawal) {
-      return res.status(404).json({ message: "Withdrawal not found" });
+    if (!withdrawals.length) {
+      return res.status(404).json({ message: "No withdrawal history found" });
     }
 
-    res.status(200).json({ withdrawal });
-    res.status(200).json(withdrawalRequests);
+    res.status(200).json({ withdrawals });
   } catch (error) {
-    console.error("Error fetching withdrawal:", error);
+    console.error("Error fetching withdrawal history:", error);
     res.status(500).json({
       success: false,
       message: "Internal Server Error",
     });
   }
 };
-
-export  {withdrawalRequests } ; 

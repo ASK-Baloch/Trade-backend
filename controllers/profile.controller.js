@@ -1,80 +1,84 @@
-import { Profile } from "../models/profile.model.js";
 import { User } from "../models/user.model.js";
 import { Referral } from "../models/refer.model.js";
 
 const profileController = async (req, res) => {
-    try {
-        const { id } = req.params;
-        if (!id) {
-            return res.status(400).json({ message: "Profile ID is required" });
-        }
-        const profile = await User.findOne({ _id: id });
-        if (!profile) {
-            return res.status(404).json({ message: "Profile not found" });
-        }
-        console.log("user profile ", profile);
-        ///get his own referal
-        const referal = await Referral.findOne({ user: id });
-        ///check if referral is not found
-        if (referal === null) {
-            return res.status(404).json({ message: "Referral not found" });
-        }
-        ///check if user has a referal by someone,find that user
-        var referringuser = null;
-        if (profile.referredBy) {
-            referringuser = await User.findOne({ _id: profile.referredBy });
-            console.log("Referred by:", referringuser);
-        }
-
-
-
-
-        ///commision
-        var commission = 0;
-        var totalReferralsL1 = 0;
-        var totalReferralsL2 = 0;
-        var totalReferralsL3 = 0;
-        var totalReferrals = 0;
-
-        if (referal.commission.level1) {
-            console.log("Level 1 commission", referal.commission.level1);
-            commission += referal.commission.level1;
-
-            totalReferralsL1 = referal.commission.level1 / 10;
-        }
-        if (referal.commission.level2) {
-            console.log("Level 2 commission", referal.commission.level2);
-            commission += referal.commission.level2;
-            totalReferralsL2 = referal.commission.level2 / 5;
-
-        }
-        if (referal.commission.level3) {
-            console.log("Level 3 commission", referal.commission.level3);
-            commission += referal.commission.level3;
-            totalReferralsL3 = (referal.commission.level3 / 2);
-
-        }
-        ///total referrals
-        totalReferrals = totalReferralsL1 + totalReferralsL2 + totalReferralsL3;
-
-        // Return the user's profile and referral details
-        const userProfile = {
-            "profile": profile,
-            'referred_by': referringuser ? referringuser.fullname : null,
-            'total_commission': commission,
-            'referral_details': {
-                'level1_referrals': totalReferralsL1,
-                'level2_referrals': totalReferralsL2,
-                'level3_referrals': totalReferralsL3,
-                'total_referrals': totalReferrals,
-            }
-        };
-        ///return the user profile
-        res.status(200).json(userProfile);
-    } catch (error) {
-        console.error("Error fetching profile:", error);
-        res.status(500).json({ message: "Internal Server Error" });
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ message: "Profile ID is required" });
     }
+
+    // Retrieve the user's profile
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+
+    // Retrieve the referral record associated with the user
+    const referralRecord = await Referral.findOne({ user: id });
+    if (!referralRecord) {
+      return res.status(404).json({ message: "Referral record not found" });
+    }
+
+    // Retrieve the referring user's details (if exists)
+    let referringUser = null;
+    if (user.referredBy) {
+      referringUser = await User.findById(user.referredBy);
+    }
+
+    // Fixed commission values (per successful sale)
+    const DIRECT_COMMISSION = 3000;
+    const LEVEL2_COMMISSION = 300; // 10% of 3000
+    const LEVEL3_COMMISSION = 150; // 5% of 3000
+
+    // Calculate total commission earned (available commission)
+    const totalCommission =
+      (referralRecord.commission.level1 || 0) +
+      (referralRecord.commission.level2 || 0) +
+      (referralRecord.commission.level3 || 0);
+
+    // Calculate referral counts based on the commission earned
+    // (Assuming each referral contributes exactly the fixed commission amounts)
+    const level1Count = referralRecord.commission.level1
+      ? Math.floor(referralRecord.commission.level1 / DIRECT_COMMISSION)
+      : 0;
+    const level2Count = referralRecord.commission.level2
+      ? Math.floor(referralRecord.commission.level2 / LEVEL2_COMMISSION)
+      : 0;
+    const level3Count = referralRecord.commission.level3
+      ? Math.floor(referralRecord.commission.level3 / LEVEL3_COMMISSION)
+      : 0;
+
+    const totalReferrals = level1Count + level2Count + level3Count;
+
+    // Construct the profile response object
+    const userProfile = {
+      profile: {
+        id: user._id,
+        fullname: user.fullname,
+        email: user.email,
+        phone: user.phone,
+        country: user.country,
+        city: user.city,
+        profession: user.profession,
+        classtype: user.classtype,
+        referralCode: user.referralCode,
+        referredBy: referringUser ? referringUser.fullname : null,
+      },
+      referralDetails: {
+        level1Referrals: level1Count,
+        level2Referrals: level2Count,
+        level3Referrals: level3Count,
+        totalReferrals: totalReferrals,
+        totalCommission: totalCommission, // Total available commission earned
+      },
+    };
+
+    res.status(200).json(userProfile);
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 };
 
 export default profileController;

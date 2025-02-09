@@ -36,8 +36,12 @@ export const handleReferralCommission = async (userId) => {
       default:
         break;
     }
-
+    
+    // To ensure Mongoose knows the nested object was updated:
+    referral.markModified("commission");
+    
     await referral.save();
+    
 
     // Move to the next referrer in the chain
     currentUser = await User.findById(currentUser.referredBy);

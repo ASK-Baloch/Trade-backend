@@ -7,15 +7,6 @@ import { Referral } from '../models/refer.model.js';
 import { handleReferralCommission } from "./referral.controller.js";
 import { generateReferralCode } from "../utils/generateRefferalCode.js";
 
-const delunverifiedusers = asynchandler(async (req, res) => {
-  const users = await User.deleteMany({ verified: false });
-  if (users) {
-    return res.json({ users_deleted: users });
-  } else {
-    return res.json({ message: "no users to delete" });
-  }
-});
-
 
 let registeruser = asynchandler(async (req, res) => {
   // Check if a file was uploaded
@@ -122,35 +113,7 @@ const login = asynchandler(async (req, res) => {
 });
 
 
-export const approveuser = asynchandler(async (req, res) => {
-    const { id, approved } = req.body;
-  
-    // Validate required fields
-    if (!id || approved === undefined) {
-      return res.status(400).json({ message: "Both 'id' and 'approved' fields are required" });
-    }
-  
-    try {
-      // Update the user's approved status
-      const updatedUser = await User.findByIdAndUpdate(
-        id,
-        { approved: Boolean(approved) },
-        { new: true } // Return the updated document
-      );
-  
-      // Check if user exists and was updated
-      if (!updatedUser) {
-        return res.status(404).json({ message: "User not found" });
-      }
-  
-      // Send success response
-      return res.status(200).json({ message: "User approval status updated successfully", updatedUser });
-    } catch (error) {
-      console.error("Error updating user approval status:", error);
-      return res.status(500).json({ message: "Error updating user approval status", error: error.message });
-    }
-  });
-  
+
 
 
 
@@ -192,26 +155,9 @@ export const approveuser = asynchandler(async (req, res) => {
 //   }
 // });
 
-const getallusers = asynchandler(async (req, res) => {
-  const users = await User.find({});
 
-  res.json({ users: users });
-});
-const deleteuser = asynchandler(async (req, res) => {
-  const { id } = req.body;
-
-  const deleteduser = await User.findByIdAndDelete(id);
-
-  if (deleteduser) {
-    res.json({ mesaage: "user deleted Successfully", user: deleteduser });
-  }
-});
 
 export {
   registeruser,
   login,
-  delunverifiedusers,
-  
-  getallusers,
-  deleteuser,
 };
