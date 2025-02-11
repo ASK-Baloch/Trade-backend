@@ -10,20 +10,20 @@ import { generateReferralCode } from "../utils/generateRefferalCode.js";
 
 let registeruser = asynchandler(async (req, res) => {
   // Check if a file was uploaded
-  if (!req.file || !req.file.path) {
-    return res.status(400).json({ message: "No screenshot file uploaded" });
-  }
+  // if (!req.file || !req.file.path) {
+  //   return res.status(400).json({ message: "No screenshot file uploaded" });
+  // }
 
-  const ss = req.file.path; // File path from the uploaded file
-  const { fullname, phone, email, password, country, city, profession, classtype  , referredBy } = req.body;
+  // const ss = req.file.path; // File path from the uploaded file
+  const { fullname, phone, email, password, country, city, profession, classtype, referredBy } = req.body;
 
   // // // Upload screenshot to Cloudinary
-  let screenshot;
-  try {
-    screenshot = await cloudinary.uploader.upload(ss);
-  } catch (uploadError) {
-    return res.status(500).json({ message: "Error uploading file to Cloudinary", error: uploadError.message });
-  }
+  // let screenshot;
+  // try {
+  //   screenshot = await cloudinary.uploader.upload(ss);
+  // } catch (uploadError) {
+  //   return res.status(500).json({ message: "Error uploading file to Cloudinary", error: uploadError.message });
+  // }
 
   // // Validate input fields
   if (!email || !password) {
@@ -57,10 +57,10 @@ let registeruser = asynchandler(async (req, res) => {
       city,
       profession,
       classtype,
-      payementss_id: screenshot.public_id,
-      payementss_url: screenshot.secure_url,
-      referralCode:  generatedCode, 
-      referredBy: referrer ? referrer._id : null, 
+      // payementss_id: screenshot.public_id,
+      // payementss_url: screenshot.secure_url,
+      referralCode: generatedCode,
+      referredBy: referrer ? referrer._id : null,
     });
 
     if (referrer) {
@@ -72,9 +72,9 @@ let registeruser = asynchandler(async (req, res) => {
 
       await handleReferralCommission(referrer._id);
     }
-      await user.save();
-    
-        // If there's a referrer, create a referral record and handle commission logic
+    await user.save();
+
+    // If there's a referrer, create a referral record and handle commission logic
     return res.status(200).json({ message: "User registered successfully", user });
   } catch (error) {
     console.error("Error creating user:", error);
@@ -85,13 +85,27 @@ let registeruser = asynchandler(async (req, res) => {
 
 
 const login = asynchandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, role } = req.body;
 
   // Check if email and password are provided
   if (!email || !password) {
     return res.status(400).json({ message: "Email and password are required" });
   }
+  const adminEmail = "admin@gmail.com"
+  const adminPassword = "admin1234"
 
+  // Check if provided credentials match the hardcoded ones
+  if (role === "admin") {
+    if (email === adminEmail && password === adminPassword) {
+      // Optionally, you can generate a token or return admin details here.
+      return res.status(200).json({
+        message: "Admin verified successfully",
+        admin: { email: adminEmail, role: "admin" }
+      });
+    } else {
+      return res.status(401).json({ message: "Invalid admin credentials" });
+    }
+  }
   // Find user by email
   const user = await User.findOne({ email });
 

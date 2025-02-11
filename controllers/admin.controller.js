@@ -192,5 +192,25 @@ const approveWithdrawalRequest = async (req, res) => {
   }
 };
 
+//////admin login
+// const login = asynchandler(async (req, res) => {
+//   const { email, password, role } = req.body;
 
-export { getAdminWithdrawalRequests, approveWithdrawalRequest , approveUser , delUnverifiedUsers, getAllUsers , deleteUser , getUserReferralDetails};
+//   // Check if email and password are provided
+//   if (!email || !password) {
+//     return res.status(400).json({ message: "Email and password are required" });
+//   }
+
+//   const adminEmail = "admin@example.com";
+//   const adminPassword = "admin1234";
+
+//   // Check if provided credentials match the hardcoded ones
+//   if (email !== adminEmail || password !== adminPassword || role !== "admin") {
+//     return res.status(401).json({ message: "Invalid credentials" });
+//   }
+//   return res.status(200).json({
+//     message: "User verified successfully"
+//   });
+
+// });
+export { getAdminWithdrawalRequests, approveWithdrawalRequest, approveUser, delUnverifiedUsers, getAllUsers, deleteUser, getUserReferralDetails };
