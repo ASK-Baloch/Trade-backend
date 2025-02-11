@@ -8,7 +8,7 @@ import { handleReferralCommission } from "./referral.controller.js";
 import { generateReferralCode } from "../utils/generateRefferalCode.js";
 
 
-let registeruser = asynchandler(async (req, res) => {
+let registerUser = asynchandler(async (req, res) => {
   // Check if a file was uploaded
   // if (!req.file || !req.file.path) {
   //   return res.status(400).json({ message: "No screenshot file uploaded" });
@@ -172,6 +172,6 @@ const login = asynchandler(async (req, res) => {
 
 
 export {
-  registeruser,
+  registerUser,
   login,
 };
