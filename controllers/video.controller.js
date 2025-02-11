@@ -63,28 +63,6 @@ export const deletecategory = asynchandler(async (req, res) => {
 });
 
 export const getallcategories = asynchandler(async (req, res) => {
-  // Since there's no backend authentication, we require a userId to be passed in the query string.
-  const { userId } = req.query;
-  if (!userId) {
-    return res
-      .status(400)
-      .json({ message: "User ID is required to access categories." });
-  }
-
-  // Find the user by ID
-  const user = await User.findById(userId);
-  if (!user) {
-    return res.status(404).json({ message: "User not found." });
-  }
-
-  // Check if the user is approved
-  if (!user.approved) {
-    return res
-      .status(403)
-      .json({ message: "User not approved for video access." });
-  }
-
-  // If approved, retrieve and return video categories
   const categories = await Video.find();
   return res.status(200).json({
     message: "All Categories",
@@ -202,31 +180,17 @@ export const deletevideo = asynchandler(async (req, res) => {
 
 export const getvideosbycategoryid = asynchandler(async (req, res) => {
   const { Id } = req.params;
-  const { userId } = req.query;  // Expect userId to be passed as a query parameter
-
+  
   if (!Id) {
     return res.status(400).json(new apierror(400, "Category ID is missing"));
   }
   
-  if (!userId) {
-    return res.status(400).json(new apierror(400, "User ID is required"));
-  }
-
-  // Verify that the user exists and is approved
-  const user = await User.findById(userId);
-  if (!user) {
-    return res.status(404).json(new apierror(404, "User not found"));
-  }
-  if (!user.approved) {
-    return res.status(403).json(new apierror(403, "User not approved for video access"));
-  }
-
   try {
     const category = await Video.findById(Id);
     if (category) {
-      return res
-        .status(200)
-        .json(new apiresponse(200, category.category_videos, "Videos fetched successfully"));
+      return res.status(200).json(
+        new apiresponse(200, category.category_videos, "Videos fetched successfully")
+      );
     } else {
       return res.status(404).json(new apierror(404, "Category not found"));
     }
@@ -238,19 +202,10 @@ export const getvideosbycategoryid = asynchandler(async (req, res) => {
 
 
 export const getvideobyid = asynchandler(async (req, res) => {
-  const { id, videoid, userId } = req.body;
-
-  if (!id || !videoid || !userId) {
-    return res.status(400).json(new apierror(400, "Category ID, video ID, and User ID are required"));
-  }
-
-  // Verify that the user exists and is approved
-  const user = await User.findById(userId);
-  if (!user) {
-    return res.status(404).json(new apierror(404, "User not found"));
-  }
-  if (!user.approved) {
-    return res.status(403).json(new apierror(403, "User not approved for video access"));
+  const { id, videoid } = req.body;
+  
+  if (!id || !videoid) {
+    return res.status(400).json(new apierror(400, "Category ID and video ID are required"));
   }
 
   try {
