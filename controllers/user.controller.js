@@ -85,13 +85,27 @@ let registerUser = asynchandler(async (req, res) => {
 
 
 const login = asynchandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, role } = req.body;
 
   // Check if email and password are provided
   if (!email || !password) {
     return res.status(400).json({ message: "Email and password are required" });
   }
+  const adminEmail = "admin@gmail.com"
+  const adminPassword = "admin1234"
 
+  // Check if provided credentials match the hardcoded ones
+  if (role === "admin") {
+    if (email === adminEmail && password === adminPassword) {
+      // Optionally, you can generate a token or return admin details here.
+      return res.status(200).json({
+        message: "Admin verified successfully",
+        admin: { email: adminEmail, role: "admin" }
+      });
+    } else {
+      return res.status(401).json({ message: "Invalid admin credentials" });
+    }
+  }
   // Find user by email
   const user = await User.findOne({ email });
 
@@ -109,9 +123,8 @@ const login = asynchandler(async (req, res) => {
   return res.status(200).json({
     message: "User verified successfully",
     user: loggedInUser,
-  });
 });
-
+});
 
 
 
