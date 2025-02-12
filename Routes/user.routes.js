@@ -3,11 +3,7 @@ import { Router } from "express";
 import { signUpWithReferral } from "../controllers/referral.controller.js";
 import { upload } from '../middelwares/multer.middelware.js';
 import profileController from '../controllers/profile.controller.js';
-<<<<<<< HEAD
-import { login, registeruser } from "../controllers/user.controller.js";
-=======
 import { login, registerUser } from "../controllers/user.controller.js";
->>>>>>> 45cec5d6fde9f1da72bd85a0023504d8fce8db0b
 import { getWithdrawalHistory, withdrawController } from "../controllers/withdraw.controller.js";
 
 
@@ -29,8 +25,6 @@ router.route('/withdraw').get(withdrawController)
 router.route('/withdrawHistory/:userId').get(getWithdrawalHistory)
 
 
-<<<<<<< HEAD
-export default router
-=======
+
 export default router
->>>>>>> 45cec5d6fde9f1da72bd85a0023504d8fce8db0b
+

@@ -17,13 +17,8 @@ const profileController = async (req, res) => {
     // Retrieve the referral record associated with the user
     let referralRecord = await Referral.findOne({ user: id });
     if (!referralRecord) {
-<<<<<<< HEAD
-      referralRecord = { commission: { level1: 0, level2: 0, level3: 0 } };
-    }
-=======
-      referralRecord = { commission: { level1: 0, level2: 0, level3: 0 } };
-    }
->>>>>>> 45cec5d6fde9f1da72bd85a0023504d8fce8db0b
+      referralRecord = { commission: { level1: 0, level2: 0, level3: 0 } };}
+
 
 
     // Retrieve the referring user's details (if exists)

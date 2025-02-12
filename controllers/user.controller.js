@@ -6,7 +6,7 @@ import cloudinary from '../middelwares/cloudinary.middelware.js'
 import { Referral } from '../models/refer.model.js';
 import { handleReferralCommission } from "./referral.controller.js";
 import { generateReferralCode } from "../utils/generateRefferalCode.js";
-
+import bcrypt from "bcrypt";
 
 let registerUser = asynchandler(async (req, res) => {
   // Check if a file was uploaded
@@ -94,18 +94,34 @@ const login = asynchandler(async (req, res) => {
   const adminEmail = "admin@gmail.com"
   const adminPassword = "admin1234"
 
-  // Check if provided credentials match the hardcoded ones
-  if (role === "admin") {
-    if (email === adminEmail && password === adminPassword) {
-      // Optionally, you can generate a token or return admin details here.
-      return res.status(200).json({
-        message: "Admin verified successfully",
-        admin: { email: adminEmail, role: "admin" }
-      });
-    } else {
-      return res.status(401).json({ message: "Invalid admin credentials" });
+
+
+
+  if (email === adminEmail && password === adminPassword) {
+
+    const role = await User.findOne({ role: "admin" })
+
+    if (!role) {
+      // res.json({ messege: "role not found" })
+        // let hashedPassword = bcrypt.hash(adminPassword, 10)
+       const  user = new User({
+          email: adminEmail,
+          password: adminPassword,
+          role: "admin",
+         phone:"00000",
+         fullname:"admin",
+         classtype:"admin",
+          approved: true, 
+        });
+       await user.save()
+       console.log(user)
     }
-  }
+
+    return res.status(200).json({
+      message: "Admin verified successfully",
+      admin: { email: adminEmail, role: "admin" }
+    });
+  } 
   // Find user by email
   const user = await User.findOne({ email });
 
