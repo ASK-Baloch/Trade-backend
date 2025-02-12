@@ -25,4 +25,6 @@ router.route('/withdraw').get(withdrawController)
 router.route('/withdrawHistory/:userId').get(getWithdrawalHistory)
 
 
+
 export default router
+

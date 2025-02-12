@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { login } from "../controllers/user.controller.js";
 import { approveUser, delUnverifiedUsers, getAdminWithdrawalRequests, approveWithdrawalRequest , deleteUser , getAllUsers, getUserReferralDetails } from "../controllers/admin.controller.js";
 
 
