@@ -97,6 +97,7 @@ const login = asynchandler(async (req, res) => {
 
 
 
+
   if (email === adminEmail && password === adminPassword) {
 
     const role = await User.findOne({ role: "admin" })
@@ -139,9 +140,8 @@ const login = asynchandler(async (req, res) => {
   return res.status(200).json({
     message: "User verified successfully",
     user: loggedInUser,
-  });
 });
-
+});
 
 
 
