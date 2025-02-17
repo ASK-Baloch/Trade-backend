@@ -1,13 +1,12 @@
-// Helper function to generate a unique referral code
-
-// Helper function to generate a unique referral code
-const generateReferralCode = (fullname, email) => {
+// Helper function to generate a unique referral code for a new user
+const generateReferralCode = (fullname) => {
   const namePart = fullname.split(' ').map(word => word[0].toUpperCase()).join('');
-  const emailPart = email.split('@')[0].toUpperCase(); 
-  const randomDigits = Math.floor(10000000000 + Math.random() * 90000000000);
-  const paddedNumber = String(randomDigits).padStart(11, '0'); 
+  const randomDigits = Math.floor(1000 + Math.random() * 9000);
+  const paddedNumber = String(randomDigits).padStart(4, '0'); 
+
+  const siteUrl = process.env.URL || 'http://localhost:3000';
   
-  return `${namePart}${emailPart}${paddedNumber}`;
+  return `${siteUrl}/refferral//${namePart}${paddedNumber}`;
 };
 
-export {generateReferralCode}
+export {generateReferralCode} 

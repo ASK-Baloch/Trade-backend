@@ -54,20 +54,20 @@ export const handleReferralCommission = async (userId) => {
 // Function to handle user signup with referral
 const signUpWithReferral = async (req, res) => {
   // Check if a file was uploaded
-  // if (!req.file || !req.file.path) {
-  //   return res.status(400).json({ message: "No screenshot file uploaded" });
-  // }
+  if (!req.file || !req.file.path) {
+    return res.status(400).json({ message: "No screenshot file uploaded" });
+  }
 
-  // const ss = req.file.path; // File path from the uploaded file
+  const ss = req.file.path; // File path from the uploaded file
   const { fullname, phone, email, password, country, city, profession, classtype , referredBy} = req.body;
 
   // Upload screenshot to Cloudinary
-  // let screenshot;
-  //   try {
-  //     screenshot = await cloudinary.uploader.upload(ss);
-  //   } catch (uploadError) {
-  //     return res.status(500).json({ message: "Error uploading file to Cloudinary", error: uploadError.message });
-  //   }
+  let screenshot;
+    try {
+      screenshot = await cloudinary.uploader.upload(ss);
+    } catch (uploadError) {
+      return res.status(500).json({ message: "Error uploading file to Cloudinary", error: uploadError.message });
+    }
   // input fields
   if (!email || !password) {
     throw new apierror(400, "All fields are required");
@@ -87,7 +87,7 @@ const signUpWithReferral = async (req, res) => {
     const referrer = referredBy ? await User.findOne({ referralCode: referredBy }) : null;
      
     // Generate a unique referral for the new user 
-    const generatedCode = generateReferralCode(fullname, email);
+    const generatedCode = generateReferralCode(fullname);
 
     // Create the new user
     const newUser = new User({
@@ -99,8 +99,8 @@ const signUpWithReferral = async (req, res) => {
       city,
       profession,
       classtype,
-      // payementss_id: screenshot.public_id,
-      // payementss_url: screenshot.secure_url,
+      payementss_id: screenshot.public_id,
+      payementss_url: screenshot.secure_url,
       referralCode:  generatedCode, 
       referredBy: referrer ? referrer._id : null, 
     });

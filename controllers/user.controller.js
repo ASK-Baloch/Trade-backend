@@ -10,20 +10,20 @@ import bcrypt from "bcrypt";
 
 let registerUser = asynchandler(async (req, res) => {
   // Check if a file was uploaded
-  // if (!req.file || !req.file.path) {
-  //   return res.status(400).json({ message: "No screenshot file uploaded" });
-  // }
+  if (!req.file || !req.file.path) {
+    return res.status(400).json({ message: "No screenshot file uploaded" });
+  }
 
-  // const ss = req.file.path; // File path from the uploaded file
+  const ss = req.file.path; // File path from the uploaded file
   const { fullname, phone, email, password, country, city, profession, classtype, referredBy } = req.body;
 
   // // // Upload screenshot to Cloudinary
-  // let screenshot;
-  // try {
-  //   screenshot = await cloudinary.uploader.upload(ss);
-  // } catch (uploadError) {
-  //   return res.status(500).json({ message: "Error uploading file to Cloudinary", error: uploadError.message });
-  // }
+  let screenshot;
+  try {
+    screenshot = await cloudinary.uploader.upload(ss);
+  } catch (uploadError) {
+    return res.status(500).json({ message: "Error uploading file to Cloudinary", error: uploadError.message });
+  }
 
   // // Validate input fields
   if (!email || !password) {
@@ -43,7 +43,7 @@ let registerUser = asynchandler(async (req, res) => {
   const referrer = referredBy ? await User.findOne({ referralCode: referredBy }) : null;
 
   // Generate a unique referral for the new user 
-  const generatedCode = generateReferralCode(fullname, email);
+  const generatedCode = generateReferralCode(fullname);
 
   let user;
   try {
@@ -57,8 +57,8 @@ let registerUser = asynchandler(async (req, res) => {
       city,
       profession,
       classtype,
-      // payementss_id: screenshot.public_id,
-      // payementss_url: screenshot.secure_url,
+      payementss_id: screenshot.public_id,
+      payementss_url: screenshot.secure_url,
       referralCode: generatedCode,
       referredBy: referrer ? referrer._id : null,
     });
@@ -103,8 +103,6 @@ const login = asynchandler(async (req, res) => {
     const role = await User.findOne({ role: "admin" })
 
     if (!role) {
-      // res.json({ messege: "role not found" })
-        // let hashedPassword = bcrypt.hash(adminPassword, 10)
        const  user = new User({
           email: adminEmail,
           password: adminPassword,
